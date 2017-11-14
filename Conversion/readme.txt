@@ -1,5 +1,0 @@
-Nous mettons à disposition deux versions : la version standard, utilisée pour transformer tout JDM en JDM-RDF, et la version compacte, utilisée pour l'interconnexion avec BabelNet, où on ne convertit que les informations utiles à cette interconnexion et normalise les podis. 
-
-Les deux programmes ont besoin du dump de JeuxDeMots (téléchargeable ici : http://www.jeuxdemots.org/JDM-LEXICALNET-FR/ ). Après les avoir compilés, il faut rajouter en argument le nom du fichier dump sans le .txt et le nombre de noeuds présents dans ce dump (visible dans les premières lignes du fichier). Il faut faire attention à bien avoir un compilateur c++ 64bits car on a besoin de plus de 2G de RAM.
-
-Les fichiers relations.txt et noeuds.txt correspondent aux dictionnaires d'équivalence utilisés par le programme, il faut les mettre dans le même dossier que le programme. Le fichier prefixe.txt contient les préfixes utilisés dans les deux fichiers précédents, et doit être déplacés avec ceux-ci.
