@@ -1,1 +1,0 @@
-Voici le code produit, divisé en deux parties, une pour l'interconnexion et une pour la conversion en JDM-RDF. Des explications sont fournies dans des fichiers readme, mais il est préférable de lire le rapport au préalable pour avoir une meilleure compréhension du sujet. Les programmes sont commentés (surtout celui pour la conversion) pour faciliter la compréhension.
