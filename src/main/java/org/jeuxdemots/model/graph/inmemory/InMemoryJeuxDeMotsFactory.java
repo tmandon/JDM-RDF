@@ -1,8 +1,11 @@
-package org.jeuxdemots.model.graph;
+package org.jeuxdemots.model.graph.inmemory;
 
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.jeuxdemots.model.api.graph.*;
+import org.jeuxdemots.model.graph.DefaultJDMNode;
+import org.jeuxdemots.model.graph.DefaultJDMRelation;
+import org.jeuxdemots.model.graph.DefaultJDMRelationType;
 
 public class InMemoryJeuxDeMotsFactory implements JeuxDeMotsFactory {
     @Override

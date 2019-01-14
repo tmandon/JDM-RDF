@@ -1,9 +1,9 @@
-package org.jeuxdemots.model.graph;
+package org.jeuxdemots.model.graph.inmemory;
 
 import org.jeuxdemots.model.api.graph.*;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class InMemoryJeuxDeMots implements JeuxDeMots {
@@ -18,13 +18,13 @@ public class InMemoryJeuxDeMots implements JeuxDeMots {
     }
 
     @Override
-    public Iterable<JDMNode> nodeIterable() {
-        return Collections.unmodifiableList(jdmNodes);
+    public void forEachNode(final Consumer<JDMNode> consumer) {
+        jdmNodes.forEach(consumer);
     }
 
     @Override
-    public Iterable<JDMNode> nodeIterable(final NodeType nodeType) {
-        return jdmNodes.typedIterable(nodeType);
+    public void forEachNodeOfType(final Consumer<JDMNode> consumer, final NodeType nodeType) {
+        jdmNodes.typedIterable(nodeType).forEach(consumer);
     }
 
     @Override
@@ -53,23 +53,23 @@ public class InMemoryJeuxDeMots implements JeuxDeMots {
     }
 
     @Override
-    public Collection<JDMRelation> getIncomingRelations(final JDMRelationType type, final JDMNode source) {
-        return jdmRelations.incomingRelations(source).stream().filter(jdmRelation -> jdmRelation.getType() == type).collect(Collectors.toList());
+    public Collection<JDMRelation> getIncomingRelations(final JDMRelationType type, final JDMNode target) {
+        return jdmRelations.incomingRelations(target).stream().filter(jdmRelation -> jdmRelation.getType() == type).collect(Collectors.toList());
     }
 
     @Override
-    public Collection<JDMRelation> getOutgoingRelations(final JDMRelationType type, final JDMNode target) {
-        return jdmRelations.outgoingRelations(target).stream().filter(jdmRelation -> jdmRelation.getType() == type).collect(Collectors.toList());
+    public Collection<JDMRelation> getOutgoingRelations(final JDMRelationType type, final JDMNode source) {
+        return jdmRelations.outgoingRelations(source).stream().filter(jdmRelation -> jdmRelation.getType() == type).collect(Collectors.toList());
     }
 
     @Override
-    public Collection<JDMRelation> getIncomingRelations(final JDMNode source) {
-        return jdmRelations.incomingRelations(source);
+    public Collection<JDMRelation> getIncomingRelations(final JDMNode target) {
+        return jdmRelations.incomingRelations(target);
     }
 
     @Override
-    public Collection<JDMRelation> getOutgoingRelations(final JDMNode target) {
-        return jdmRelations.outgoingRelations(target);
+    public Collection<JDMRelation> getOutgoingRelations(final JDMNode source) {
+        return jdmRelations.outgoingRelations(source);
     }
 
     @Override

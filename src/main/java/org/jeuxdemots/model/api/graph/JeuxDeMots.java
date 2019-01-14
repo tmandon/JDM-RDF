@@ -2,11 +2,12 @@ package org.jeuxdemots.model.api.graph;
 
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 public interface JeuxDeMots {
 
-    Iterable<JDMNode> nodeIterable();
-    Iterable<JDMNode> nodeIterable(NodeType nodeType);
+    void forEachNode(final Consumer<JDMNode> consumer);
+    void forEachNodeOfType(final Consumer<JDMNode> consumer, final NodeType nodeType);
 
     JDMNode getNode(String name);
     JDMNode getNode(int id);

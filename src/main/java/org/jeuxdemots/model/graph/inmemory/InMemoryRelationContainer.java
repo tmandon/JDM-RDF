@@ -1,4 +1,4 @@
-package org.jeuxdemots.model.graph;
+package org.jeuxdemots.model.graph.inmemory;
 
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -6,6 +6,7 @@ import org.jeuxdemots.model.api.graph.JDMNode;
 import org.jeuxdemots.model.api.graph.JDMRelation;
 import org.jeuxdemots.model.api.graph.JDMRelationType;
 import org.jeuxdemots.model.api.graph.RelationContainer;
+import org.jeuxdemots.model.graph.DefaultJDMRelation;
 
 import java.util.*;
 import java.util.stream.Collectors;

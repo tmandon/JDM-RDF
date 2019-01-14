@@ -1,10 +1,11 @@
-package org.jeuxdemots.model.graph;
+package org.jeuxdemots.model.graph.inmemory;
 
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.jeuxdemots.model.api.graph.JDMNode;
 import org.jeuxdemots.model.api.graph.NodeContainer;
 import org.jeuxdemots.model.api.graph.NodeType;
+import org.jeuxdemots.model.graph.DefaultJDMNode;
 
 import java.util.*;
 
@@ -126,7 +127,7 @@ public class InMemoryNodeContainer implements NodeContainer {
     public JDMNode get(final int index) {
         JDMNode result = null;
         if (index < size()) {
-            result = new DefaultJDMNode(new MutableInt(index+1), nodeNames[index], nodeTypes[index], nodeWeights[index]);
+            result = new DefaultJDMNode(new MutableInt(index+1), nodeNames[index], nodeTypes[index].getCode(), nodeWeights[index]);
         }
         return result;
     }

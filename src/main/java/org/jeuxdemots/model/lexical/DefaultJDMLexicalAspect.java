@@ -5,21 +5,30 @@ import org.jeuxdemots.model.api.graph.*;
 import org.jeuxdemots.model.api.lexical.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class DefaultJDMLexicalAspect implements JDMLexicalAspect {
 
+    private final JDMRelationType raffSemType;
     private final JeuxDeMots jeuxDeMots;
     private final Map<MutableInt, JDMLexicalSense> senseIndex;
 
     public DefaultJDMLexicalAspect(final JeuxDeMots jeuxDeMots) {
         this.jeuxDeMots = jeuxDeMots;
         senseIndex = new HashMap<>();
+        raffSemType = jeuxDeMots.findType("r_raff_sem");
     }
 
     @Override
-    public Iterable<JDMLexicalEntry> lexicalEntries() {
-        return () -> new JDMLexicalEntryIterator(jeuxDeMots, this);
+    public void forEachLexicalEntry(final Consumer<JDMLexicalEntry> consumer) {
+        jeuxDeMots.forEachNodeOfType(node -> {
+                    final JDMLexicalEntry lexicalEntry = nodeToLexicalEntry(node);
+                    if (lexicalEntry != null) {
+                        consumer.accept(lexicalEntry);
+                    }
+                },
+                NodeType.TERM);
     }
 
     /**
@@ -31,17 +40,42 @@ public class DefaultJDMLexicalAspect implements JDMLexicalAspect {
     @Override
     public JDMLexicalEntry nodeToLexicalEntry(final JDMNode node) {
         JDMLexicalEntry lexicalEntry = null;
-        final Map<JDMRelationType, List<JDMRelation>> relationTypeMap = outgoingRelationMap(node);
-        final List<JDMNode> senseNodes = getSenseNodes(relationTypeMap);
-        if (!senseNodes.isEmpty()) {
-            final String pos = getPOS(relationTypeMap);
-            final List<JDMLexicalSense> lexicalSenses = lexicalSensesFromNodes(senseNodes);
-            lexicalEntry = new DefaultJDMLexicalEntry(node, pos, lexicalSensesFromNodes(senseNodes));
-            for (final JDMLexicalSense jdmLexicalSense : lexicalSenses) {
-                senseIndex.put(jdmLexicalSense.getId(), jdmLexicalSense);
+        final Map<JDMRelationType, List<JDMRelation>> incomingRefinementRelations = relationMap(jeuxDeMots.getIncomingRelations(raffSemType, node));
+        if (incomingRefinementRelations.isEmpty()) {
+            final Map<JDMRelationType, List<JDMRelation>> outgoingRelationMap = relationMap(jeuxDeMots.getOutgoingRelations(node));
+            final String[] posParts = getPOS(outgoingRelationMap).split(":");
+            //If posParts[1] isn't empty, we have a derived form
+            if((posParts.length == 1) || posParts[1].isEmpty()) {
+                final List<JDMNode> senseNodes = getSenseNodes(outgoingRelationMap);
+                final List<JDMLexicalSense> lexicalSenses = lexicalSensesFromNodes(senseNodes);
+                lexicalEntry = new DefaultJDMLexicalEntry(jeuxDeMots, node, lexicalSensesFromNodes(senseNodes),
+                        incomingRefinementRelations, outgoingRelationMap);
+                for (final JDMLexicalSense jdmLexicalSense : lexicalSenses) {
+                    senseIndex.put(jdmLexicalSense.getId(), jdmLexicalSense);
+                }
+            } else {
+
             }
         }
         return lexicalEntry;
+    }
+
+    private String getPOS(final Map<JDMRelationType, List<JDMRelation>> outgoingRelations) {
+        final JDMRelationType relationType = jeuxDeMots.findType("r_pos");
+        List<JDMRelation> POS = outgoingRelations.get(relationType);
+        if (POS == null) {
+            POS = Collections.emptyList();
+        }
+        return (POS.isEmpty())
+                ? ""
+                : POS
+                .stream()
+                .map(jdmRelation -> jeuxDeMots.getNode(jdmRelation
+                        .getTargetId()
+                        .intValue()))
+                .collect(Collectors.toList())
+                .get(0)
+                .getName();
     }
 
     @Override
@@ -81,8 +115,7 @@ public class DefaultJDMLexicalAspect implements JDMLexicalAspect {
     }
 
 
-    private Map<JDMRelationType, List<JDMRelation>> outgoingRelationMap(final JDMNode node) {
-        final Collection<JDMRelation> relations = jeuxDeMots.getOutgoingRelations(node);
+    private Map<JDMRelationType, List<JDMRelation>> relationMap(final Collection<JDMRelation> relations) {
         return (relations.isEmpty())
                 ? Collections.emptyMap()
                 : relations
@@ -93,8 +126,7 @@ public class DefaultJDMLexicalAspect implements JDMLexicalAspect {
     }
 
     private List<JDMNode> getSenseNodes(final Map<JDMRelationType, List<JDMRelation>> relationTypeMap) {
-        final JDMRelationType relationType = jeuxDeMots.findType("r_raff_sem");
-        final List<JDMRelation> senses = relationTypeMap.get(relationType);
+        final List<JDMRelation> senses = relationTypeMap.get(raffSemType);
 //        relationTypeMap.remove(relationType);
 
         return ((senses != null) && !senses.isEmpty()) ? senses
@@ -106,32 +138,14 @@ public class DefaultJDMLexicalAspect implements JDMLexicalAspect {
                 .collect(Collectors.toList()) : Collections.emptyList();
     }
 
-    private String getPOS(final Map<JDMRelationType, List<JDMRelation>> relationTypeMap) {
-        final JDMRelationType relationType = jeuxDeMots.findType("r_pos");
-        List<JDMRelation> POS = relationTypeMap.get(relationType);
-        if (POS == null) {
-            POS = Collections.emptyList();
-        }
-        return (POS.isEmpty())
-                ? ""
-                : POS
-                .stream()
-                .map(jdmRelation -> jeuxDeMots.getNode(jdmRelation
-                        .getTargetId()
-                        .intValue()))
-                .collect(Collectors.toList())
-                .get(0)
-                .getName();
+    @Override
+    public void forEachNode(final Consumer<JDMNode> consumer) {
+        jeuxDeMots.forEachNode(consumer);
     }
 
     @Override
-    public Iterable<JDMNode> nodeIterable() {
-        return jeuxDeMots.nodeIterable();
-    }
-
-    @Override
-    public Iterable<JDMNode> nodeIterable(final NodeType nodeType) {
-        return jeuxDeMots.nodeIterable(nodeType);
+    public void forEachNodeOfType(final Consumer<JDMNode> consumer, final NodeType nodeType) {
+        jeuxDeMots.forEachNodeOfType(consumer, nodeType);
     }
 
     @Override
@@ -187,47 +201,5 @@ public class DefaultJDMLexicalAspect implements JDMLexicalAspect {
     @Override
     public JDMNode getRelationTarget(final JDMRelation relation) {
         return jeuxDeMots.getRelationTarget(relation);
-    }
-
-
-    private static class JDMLexicalEntryIterator implements Iterator<JDMLexicalEntry> {
-
-
-        final Iterator<JDMNode> termIterator;
-        private JDMLexicalEntry currentEntry;
-        JDMLexicalAspect lexicalAspect;
-        boolean nextChecked;
-
-        JDMLexicalEntryIterator(final JeuxDeMots jeuxDeMots, final JDMLexicalAspect lexicalAspect) {
-            this.lexicalAspect = lexicalAspect;
-            termIterator = jeuxDeMots
-                    .nodeIterable(NodeType.TERM)
-                    .iterator();
-        }
-
-
-        @Override
-        public boolean hasNext() {
-            findNextEntry();
-            nextChecked = true;
-            return currentEntry != null;
-        }
-
-        private void findNextEntry() {
-            JDMLexicalEntry currentEntry = null;
-            while (termIterator.hasNext() && (currentEntry == null)) {
-                final JDMNode termNode = termIterator.next();
-                currentEntry = lexicalAspect.nodeToLexicalEntry(termNode);
-            }
-            this.currentEntry = currentEntry;
-        }
-
-        @Override
-        public JDMLexicalEntry next() {
-            if (!nextChecked) {
-                findNextEntry();
-            }
-            return currentEntry;
-        }
     }
 }

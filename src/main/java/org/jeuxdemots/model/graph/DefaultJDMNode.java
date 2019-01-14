@@ -15,7 +15,7 @@ public class DefaultJDMNode implements JDMNode {
     private final MutableDouble weight;
     private final NodeType nodeType;
 
-    DefaultJDMNode(final MutableInt id, final CharSequence name, final int nodeType, final MutableDouble weight) {
+    public DefaultJDMNode(final MutableInt id, final CharSequence name, final int nodeType, final MutableDouble weight) {
         this.id = id;
         this.name = UNESCAPE_QUOTES.matcher(UNESCAPE_APOSTROPHE.matcher(name).replaceAll("\"")).replaceAll("\"");
         this.weight = weight;

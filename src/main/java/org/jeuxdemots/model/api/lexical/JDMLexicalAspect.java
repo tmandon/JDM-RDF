@@ -4,9 +4,10 @@ import org.jeuxdemots.model.api.graph.JDMNode;
 import org.jeuxdemots.model.api.graph.JeuxDeMots;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 public interface JDMLexicalAspect extends JeuxDeMots{
-    Iterable<JDMLexicalEntry> lexicalEntries();
+    void forEachLexicalEntry(Consumer<JDMLexicalEntry> consumer);
     JDMLexicalEntry nodeToLexicalEntry(final JDMNode node);
 
     JDMLexicalSense nodeToLexicalSense(JDMNode node);
