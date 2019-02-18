@@ -45,10 +45,10 @@ public class DefaultJDMLexicalAspect implements JDMLexicalAspect {
             final Map<JDMRelationType, List<JDMRelation>> outgoingRelationMap = relationMap(jeuxDeMots.getOutgoingRelations(node));
             final String[] posParts = getPOS(outgoingRelationMap).split(":");
             //If posParts[1] isn't empty, we have a derived form
-            if((posParts.length == 1) || posParts[1].isEmpty()) {
+            if ((posParts.length == 1) || posParts[1].isEmpty()) {
                 final List<JDMNode> senseNodes = getSenseNodes(outgoingRelationMap);
                 final List<JDMLexicalSense> lexicalSenses = lexicalSensesFromNodes(senseNodes);
-                lexicalEntry = new DefaultJDMLexicalEntry(jeuxDeMots, node, lexicalSensesFromNodes(senseNodes),
+                lexicalEntry = new DefaultJDMLexicalEntry(jeuxDeMots, node, "", lexicalSensesFromNodes(senseNodes),
                         incomingRefinementRelations, outgoingRelationMap);
                 for (final JDMLexicalSense jdmLexicalSense : lexicalSenses) {
                     senseIndex.put(jdmLexicalSense.getId(), jdmLexicalSense);
