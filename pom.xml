@@ -30,7 +30,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>org.jeuxdemots.cli.JDMMysqlLoader</mainClass>
+                            <mainClass>org.jeuxdemots.converter.OntolexJDMConverter</mainClass>
                         </manifest>
                     </archive>
                     <finalName>ontolexjdm</finalName>

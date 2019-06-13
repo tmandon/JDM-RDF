@@ -45,12 +45,12 @@ public class DefaultJDMNode implements JDMNode {
     }
 
     @Override
-    public void incrementWeight(final double value){
+    public void incrementWeight(final double value) {
         weight.add(value);
     }
 
     @Override
-    public void decrementWeight(final double value){
+    public void decrementWeight(final double value) {
         weight.subtract(value);
     }
 
@@ -59,5 +59,12 @@ public class DefaultJDMNode implements JDMNode {
         return nodeType;
     }
 
-
+    @Override
+    public String toString() {
+        return "Node[" +
+                id +
+                " | " + name +
+                "(" + weight + ")" +
+                " T=" + nodeType + "]";
+    }
 }

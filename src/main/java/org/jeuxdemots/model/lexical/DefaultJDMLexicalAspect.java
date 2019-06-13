@@ -1,23 +1,31 @@
 package org.jeuxdemots.model.lexical;
 
-import org.apache.commons.lang3.mutable.MutableInt;
 import org.jeuxdemots.model.api.graph.*;
-import org.jeuxdemots.model.api.lexical.*;
+import org.jeuxdemots.model.api.lexical.JDMLexicalAspect;
+import org.jeuxdemots.model.api.lexical.JDMLexicalEntry;
+import org.jeuxdemots.model.api.lexical.JDMLexicalSense;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class DefaultJDMLexicalAspect implements JDMLexicalAspect {
 
+    static final String R_RAFF_SEM = "r_raff_sem";
     private final JDMRelationType raffSemType;
     private final JeuxDeMots jeuxDeMots;
-    private final Map<MutableInt, JDMLexicalSense> senseIndex;
+//    private final Map<MutableInt, JDMLexicalSense> senseIndex;
+//    private final Map<MutableInt, JDMLexicalEntry> entryIndex;
+
+//    private final Logger logger = LoggerFactory.getLogger(DefaultJDMLexicalAspect.class);
 
     public DefaultJDMLexicalAspect(final JeuxDeMots jeuxDeMots) {
         this.jeuxDeMots = jeuxDeMots;
-        senseIndex = new HashMap<>();
-        raffSemType = jeuxDeMots.findType("r_raff_sem");
+//        senseIndex = new HashMap<>();
+//        entryIndex = new HashMap<>();
+        raffSemType = jeuxDeMots.findType(R_RAFF_SEM);
     }
 
     @Override
@@ -31,112 +39,47 @@ public class DefaultJDMLexicalAspect implements JDMLexicalAspect {
                 NodeType.TERM);
     }
 
+    @Override
+    public Optional<JDMLexicalEntry> getLexicalEntry(final int id) {
+        return Optional.ofNullable(nodeToLexicalEntry(jeuxDeMots.getNode(id)));
+    }
+
+    @Override
+    public Optional<JDMLexicalSense> getLexicalSense(final int id) {
+        return Optional.ofNullable(nodeToLexicalSense(jeuxDeMots.getNode(id)));
+    }
+
     /**
      * Converts a JDMNode into a corresponding lexical entry, if the JDMNode corresponds to a lexical entry,
      * otherwise returns null.
      *
      * @return The corresponding lexical entry or null
      */
-    @Override
-    public JDMLexicalEntry nodeToLexicalEntry(final JDMNode node) {
+    private JDMLexicalEntry nodeToLexicalEntry(final JDMNode node) {
+//        final MutableInt id = node.getId();
+//        JDMLexicalEntry lexicalEntry = entryIndex.get(id);
         JDMLexicalEntry lexicalEntry = null;
-        final Map<JDMRelationType, List<JDMRelation>> incomingRefinementRelations = relationMap(jeuxDeMots.getIncomingRelations(raffSemType, node));
+//        if (lexicalEntry == null) {
+        final Map<JDMRelationType, List<JDMRelation>> incomingRefinementRelations = JDMLexicalAspect.relationListToRelationMap(jeuxDeMots.getIncomingRelations(raffSemType, node));
         if (incomingRefinementRelations.isEmpty()) {
-            final Map<JDMRelationType, List<JDMRelation>> outgoingRelationMap = relationMap(jeuxDeMots.getOutgoingRelations(node));
-            final String[] posParts = getPOS(outgoingRelationMap).split(":");
-            //If posParts[1] isn't empty, we have a derived form
-            if ((posParts.length == 1) || posParts[1].isEmpty()) {
-                final List<JDMNode> senseNodes = getSenseNodes(outgoingRelationMap);
-                final List<JDMLexicalSense> lexicalSenses = lexicalSensesFromNodes(senseNodes);
-                lexicalEntry = new DefaultJDMLexicalEntry(jeuxDeMots, node, "", lexicalSensesFromNodes(senseNodes),
-                        incomingRefinementRelations, outgoingRelationMap);
-                for (final JDMLexicalSense jdmLexicalSense : lexicalSenses) {
-                    senseIndex.put(jdmLexicalSense.getId(), jdmLexicalSense);
-                }
-            } else {
+            final Map<JDMRelationType, List<JDMRelation>> outgoingRelationMap = JDMLexicalAspect.relationListToRelationMap(jeuxDeMots.getOutgoingRelations(node));
 
-            }
+            lexicalEntry = new DefaultJDMLexicalEntry(this, node, outgoingRelationMap);
         }
+//        }
         return lexicalEntry;
     }
 
-    private String getPOS(final Map<JDMRelationType, List<JDMRelation>> outgoingRelations) {
-        final JDMRelationType relationType = jeuxDeMots.findType("r_pos");
-        List<JDMRelation> POS = outgoingRelations.get(relationType);
-        if (POS == null) {
-            POS = Collections.emptyList();
+
+    private JDMLexicalSense nodeToLexicalSense(final JDMNode node) {
+//        final MutableInt id = node.getId();
+        JDMLexicalSense lexicalSense = null;
+        if (node.getName().contains(">")) {
+            lexicalSense = new DefaultJDMLexicalSense(node, this);
         }
-        return (POS.isEmpty())
-                ? ""
-                : POS
-                .stream()
-                .map(jdmRelation -> jeuxDeMots.getNode(jdmRelation
-                        .getTargetId()
-                        .intValue()))
-                .collect(Collectors.toList())
-                .get(0)
-                .getName();
+        return lexicalSense;
     }
 
-    @Override
-    public JDMLexicalSense nodeToLexicalSense(final JDMNode node) {
-        return senseIndex.get(node.getId());
-    }
-
-    @Override
-    public Collection<JDMLexicalRelation> getLexicalRelations(final JDMLexicalEntry lexicalEntry) {
-        final Collection<JDMRelation> entryRelation = jeuxDeMots.getOutgoingRelations(lexicalEntry);
-        return entryRelation
-                .stream()
-                .filter(Objects::nonNull)
-                .map(relation ->
-                        new DefaultJDMLexicalRelation(relation, this)
-                )
-                .filter(jdmRelation -> (jdmRelation.getTargetEntry() != null) && (jdmRelation.getSourceEntry() != null))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public Collection<JDMSemanticRelation> getSemanticRelations(final JDMLexicalSense lexicalSense) {
-        final Collection<JDMRelation> senseRelations = jeuxDeMots.getOutgoingRelations(lexicalSense);
-        return senseRelations
-                .stream()
-                .map(relation ->
-                        new DefaultJDMSemanticRelation(relation, this)
-                )
-                .collect(Collectors.toList());
-    }
-
-    private List<JDMLexicalSense> lexicalSensesFromNodes(final Collection<JDMNode> senseNodes) {
-        return senseNodes
-                .stream()
-                .map((JDMNode node) -> new DefaultJDMLexicalSense(node, jeuxDeMots))
-                .collect(Collectors.toList());
-    }
-
-
-    private Map<JDMRelationType, List<JDMRelation>> relationMap(final Collection<JDMRelation> relations) {
-        return (relations.isEmpty())
-                ? Collections.emptyMap()
-                : relations
-                .stream()
-                .filter(Objects::nonNull)
-                .filter(jdmRelation -> jdmRelation.getType() != null)
-                .collect(Collectors.groupingBy(JDMRelation::getType));
-    }
-
-    private List<JDMNode> getSenseNodes(final Map<JDMRelationType, List<JDMRelation>> relationTypeMap) {
-        final List<JDMRelation> senses = relationTypeMap.get(raffSemType);
-//        relationTypeMap.remove(relationType);
-
-        return ((senses != null) && !senses.isEmpty()) ? senses
-                .stream()
-                .map(jdmRelation -> jeuxDeMots.getNode(jdmRelation
-                        .getTargetId()
-                        .intValue()))
-                .filter(node -> node.getName() != null)
-                .collect(Collectors.toList()) : Collections.emptyList();
-    }
 
     @Override
     public void forEachNode(final Consumer<JDMNode> consumer) {

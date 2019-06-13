@@ -43,7 +43,6 @@ public class SQLJeuxDeMots implements JeuxDeMots {
         forEachNodeDelegate(consumer, nodeType);
     }
 
-    @SuppressWarnings("JpaQueryApiInspection")
     private void forEachNodeDelegate(final Consumer<JDMNode> consumer, final NodeType nodeType) {
         String query = "SELECT * FROM nodes";
         if (nodeType != null) {
@@ -56,7 +55,7 @@ public class SQLJeuxDeMots implements JeuxDeMots {
             if (nodeType != null) {
                 statement.setInt(1, nodeType.getCode());
             }
-            try (ResultSet resultSet = statement.executeQuery()) {
+            try (final ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     consumer.accept(
                             new DefaultJDMNode(
@@ -105,7 +104,7 @@ public class SQLJeuxDeMots implements JeuxDeMots {
 
     private JDMNode nodeFromPreparedStatement(final PreparedStatement statement) throws SQLException {
         JDMNode node = null;
-        try (ResultSet resultSet = statement.executeQuery()) {
+        try (final ResultSet resultSet = statement.executeQuery()) {
             if (resultSet.next()) {
                 node = new DefaultJDMNode(
                         new MutableInt(resultSet.getInt(1)),
@@ -120,7 +119,7 @@ public class SQLJeuxDeMots implements JeuxDeMots {
 
     private List<JDMNode> nodesFromPreparedStatement(final PreparedStatement statement) throws SQLException {
         final List<JDMNode> nodes = new ArrayList<>();
-        try (ResultSet resultSet = statement.executeQuery()) {
+        try (final ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
                 nodes.add(new DefaultJDMNode(
                         new MutableInt(resultSet.getInt(1)),
@@ -135,7 +134,7 @@ public class SQLJeuxDeMots implements JeuxDeMots {
 
     private JDMRelationType relationTypeFromPreparedStatement(final PreparedStatement statement) throws SQLException {
         JDMRelationType relationType = null;
-        try (ResultSet resultSet = statement.executeQuery()) {
+        try (final ResultSet resultSet = statement.executeQuery()) {
             if (resultSet.next()) {
                 relationType = new DefaultJDMRelationType(
                         new MutableInt(resultSet.getInt(1)),
@@ -150,25 +149,22 @@ public class SQLJeuxDeMots implements JeuxDeMots {
 
     private JDMRelation relationFromPreparedStatement(final PreparedStatement statement) throws SQLException {
         final JDMRelation relation;
-        try (ResultSet resultSet = statement.executeQuery()) {
+        try (final ResultSet resultSet = statement.executeQuery()) {
             relation = relationFromResultSet(resultSet);
         }
         return relation;
     }
 
     private JDMRelation relationFromResultSet(final ResultSet resultSet) throws SQLException {
-        JDMRelation relation = null;
-        if (resultSet.next()) {
-            final JDMRelationType relationType = findType(resultSet.getInt(4));
-            relation = new DefaultJDMRelation(
-                    new MutableInt(resultSet.getInt(1)),
-                    new MutableInt(resultSet.getInt(2)),
-                    new MutableInt(resultSet.getInt(3)),
-                    relationType,
-                    new MutableDouble(resultSet.getDouble(5))
-            );
-        }
-        return relation;
+
+        final JDMRelationType relationType = findType(resultSet.getInt(4));
+
+        return new DefaultJDMRelation(
+                new MutableInt(resultSet.getInt(1)),
+                new MutableInt(resultSet.getInt(2)),
+                new MutableInt(resultSet.getInt(3)),
+                relationType,
+                new MutableDouble(resultSet.getDouble(5)));
     }
 
     @Override
@@ -234,6 +230,7 @@ public class SQLJeuxDeMots implements JeuxDeMots {
 
     private Collection<JDMRelation> getInOutRelationsFromQuery(final String query, final JDMRelationType type, final JDMNode node) {
         final Collection<JDMRelation> relations = new ArrayList<>();
+        int counter = 0;
         try (final PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, node
                     .getId()
@@ -243,9 +240,10 @@ public class SQLJeuxDeMots implements JeuxDeMots {
                         .getId()
                         .intValue());
             }
-            try (ResultSet resultSet = statement.executeQuery()) {
+            try (final ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     relations.add(relationFromResultSet(resultSet));
+                    counter++;
                 }
             }
         } catch (final SQLException e) {

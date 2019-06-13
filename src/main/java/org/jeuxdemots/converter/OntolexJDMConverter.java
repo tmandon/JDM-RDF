@@ -32,7 +32,7 @@ public class OntolexJDMConverter implements JDMConverter {
                 DriverManager.getConnection(jdbcUrl);
 
         final Connection streamConnection =
-                DriverManager.getConnection("jdbcUrl");
+                DriverManager.getConnection(jdbcUrl);
         final JeuxDeMots jeuxDeMots = new SQLJeuxDeMots(connection, streamConnection);
 
 
@@ -45,17 +45,17 @@ public class OntolexJDMConverter implements JDMConverter {
             logger.info("LE(id = {}) {}#{}, #{} senses", lexicalEntry.getId(), lexicalEntry.getName(), lexicalEntry.getPosTag(), lexicalEntry
                     .getSenses()
                     .size());
-            //           showLexicalRelations(lexicalAspect, lexicalEntry);
+            showLexicalRelations(lexicalAspect, lexicalEntry);
             for (final JDMLexicalSense sense : lexicalEntry.getSenses()) {
                 logger.info("\t\t--> Sense {} gloss={}", sense.getName(), sense.getGloss());
-//                showSenseRelations(lexicalAspect, sense);
+                showSenseRelations(lexicalAspect, sense);
             }
 
         });
     }
 
     private static void showLexicalRelations(final JDMLexicalAspect lexicalAspect, final JDMLexicalEntry lexicalEntry) {
-        for (final JDMLexicalRelation lexicalRelation : lexicalAspect.getLexicalRelations(lexicalEntry)) {
+        for (final JDMLexicalRelation lexicalRelation : lexicalEntry.getLexicalRelations()) {
             logger.info("  |__LR[{}] {}->{}", lexicalRelation
                     .getType()
                     .getName(), lexicalRelation
@@ -67,7 +67,7 @@ public class OntolexJDMConverter implements JDMConverter {
     }
 
     private static void showSenseRelations(final JDMLexicalAspect lexicalAspect, final JDMLexicalSense lexicalSense) {
-        for (final JDMSemanticRelation semanticRelation : lexicalAspect.getSemanticRelations(lexicalSense)) {
+        for (final JDMSemanticRelation semanticRelation : lexicalSense.getSemanticRelations()) {
             logger.info("\t\t |__SR[{}] {}->{}", semanticRelation.getType(), semanticRelation.getSourceSense(), semanticRelation.getTargetSense());
         }
     }
